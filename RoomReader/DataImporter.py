@@ -39,7 +39,7 @@ def import_picture(path: Path, config: Config) -> ImageData:
         maker_note_json["direction_w"],
     )
 
-    image_data = ImageData(image, direction, position)
+    image_data = ImageData(image, direction, position, path)
 
     return image_data
 
