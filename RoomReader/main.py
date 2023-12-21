@@ -1,6 +1,7 @@
 from RoomReader.Config import Config
 from RoomReader.DataImporter import import_pictures
-from ImageRecognition import detect_images
+from RoomReader.ImageRecognition import detect_images
+from RoomReader.SemanticMapper import map_semantic, map_semantic_2d
 
 config = Config()
 config.data_directory = config.sampledata_directory
@@ -8,4 +9,10 @@ config.data_directory = config.sampledata_directory
 images = import_pictures(config)
 detection_data = detect_images(images, config)
 
-print(detection_data)
+semantic_fields = map_semantic_2d(detection_data, config)
+
+output = ""
+for row in semantic_fields:
+    output += ",".join(row) + "\n"
+
+print(output)

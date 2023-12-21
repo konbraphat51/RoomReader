@@ -14,3 +14,4 @@ class Config:
         self.room_z_min = -20
         self.room_z_max = 20
         self.interval = 1
+        self.semantic_threshold = 2

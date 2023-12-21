@@ -19,8 +19,31 @@ def map_semantic(detection_data: Iterable[DetectionData], config: Config):
                     
                 max_class = max(_class_num, key=_class_num.get)
                 
-                if _class_num[max_class] > config.semantic_threshold:
+                if _class_num[max_class] >= config.semantic_threshold:
                     vector_field[x][y][z] = max_class
+                    
+    return vector_field
+
+def map_semantic_2d(detection_data: Iterable[DetectionData], config: Config):
+    scaler_fields = create_semantic_fields(detection_data, config)
+    
+    vector_field = _make_scaler_field(config, "")
+    for x in range(len(vector_field)):
+        for y in range(len(vector_field[x])):
+            vector_field[x][y] = ""
+            
+            _class_num = {}
+            for _class in scaler_fields.keys():
+                for z in range(len(scaler_fields[_class][x][y])):
+                    _class_num[_class] = _class_num.get(_class, 0) + scaler_fields[_class][x][y][z]
+                    
+            if len(_class_num) == 0:
+                continue
+            
+            max_class = max(_class_num, key=_class_num.get)
+                
+            if _class_num[max_class] >= config.semantic_threshold:
+                vector_field[x][y] = max_class
                     
     return vector_field
         
