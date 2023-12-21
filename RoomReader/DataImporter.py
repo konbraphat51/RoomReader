@@ -38,6 +38,8 @@ def import_picture(path: Path, config: Config) -> ImageData:
         maker_note_json["direction_z"],
         maker_note_json["direction_w"],
     )
+    
+    direction = Quaternion.Inverse(direction).normalized
 
     image_data = ImageData(image, direction, position, path)
 
