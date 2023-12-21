@@ -1,5 +1,9 @@
 from setuptools import find_packages, setup
 
+def requirements():
+    with open("requirements.txt") as f:
+        return f.read().splitlines()
+
 setup(
     name="RoomReader",
     version="0.0.1",
@@ -8,6 +12,7 @@ setup(
     long_description="a",
     long_description_content_type="text/markdown",
     author="author_name",
+    requires=requirements(),
     packages=find_packages(),
     install_requires=[],
     entry_points={
