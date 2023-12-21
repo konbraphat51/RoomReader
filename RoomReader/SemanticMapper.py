@@ -86,7 +86,7 @@ def _weighten_field(detection_data: Iterable[DetectionData], config:Config) -> l
     return output
 
 def _process_a_detection(field: list[list[list[float]]], detection: DetectionData, config: Config):
-    direction = detection.image.quaternion * Vector(0, 1, 0)
+    direction = detection.image.quaternion * Vector(0, 0, -1)
     direction = Vector(direction[0], direction[1], direction[2])
     _launch_ray(field, detection.image.position, direction, config)
     
