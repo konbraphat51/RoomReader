@@ -32,4 +32,13 @@ def import_picture(path: Path, config: Config) -> ImageData:
     image_data = ImageData(image, direction, position)
     
     return image_data
+
+def import_pictures(config: Config) -> list[ImageData]:
+    """Imports all pictures from the data directory and returns a list of ImageData objects."""
+    image_data_list = []
+    
+    for path in config.data_directory.iterdir():
+        image_data_list.append(import_picture(path, config))
+        
+    return image_data_list
     
