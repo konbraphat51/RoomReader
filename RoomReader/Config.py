@@ -7,3 +7,10 @@ class Config:
         self.data_directory = self.library_directory / Path("Data")
         self.sampledata_directory = self.library_directory / Path("SampleData")
         self.yolo_model = model = torch.hub.load("ultralytics/yolov5", "yolov5s", pretrained=True)
+        self.room_x_min = -20
+        self.room_x_max = 20
+        self.room_y_min = -20
+        self.room_y_max = 20
+        self.room_z_min = -20
+        self.room_z_max = 20
+        self.interval = 1
