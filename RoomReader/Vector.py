@@ -14,3 +14,6 @@ class Vector(tuple):
         return Vector(
             self[0] - other[0], self[1] - other[1], self[2] - other[2]
         )
+
+    def __mul__(self, other: float) -> Vector:
+        return Vector(self[0] * other, self[1] * other, self[2] * other)
