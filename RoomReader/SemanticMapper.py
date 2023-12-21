@@ -9,7 +9,7 @@ from UnityQuaternion import Quaternion
 def map_semantic(detection_data: Iterable[DetectionData], config: Config):
     scaler_fields = create_semantic_fields(detection_data, config)
     
-    vector_field = _make_scaler_field(config, -1)
+    vector_field = _make_scaler_field(config, "")
     for x in range(len(vector_field)):
         for y in range(len(vector_field[x])):
             for z in range(len(vector_field[x][y])):
