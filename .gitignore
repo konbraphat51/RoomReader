@@ -1,2 +1,3 @@
 RoomReader.egg-info/**
 **/__pycache__/**
+yolov5s.pt
