@@ -1,12 +1,11 @@
 from __future__ import annotations
 import torch
+from RoomReader.Config import Config
 from RoomReader.DetectionData import DetectionData
 from RoomReader.ImageData import ImageData
 
-model = torch.hub.load("ultralytics/yolov5", "yolov5s", pretrained=True)
-
-def detect_image(image: ImageData) -> list[DetectionData]:
-    results = model(image.path.resolve())
+def detect_image(image: ImageData, config: Config) -> list[DetectionData]:
+    results = config.yolo_model(image.path.resolve())
     df_objects = results.pandas().xyxy[0]
 
     detections = []
@@ -21,9 +20,9 @@ def detect_image(image: ImageData) -> list[DetectionData]:
 
     return detections
 
-def detect_images(images: list[ImageData]) -> list[DetectionData]:
+def detect_images(images: list[ImageData], config: Config) -> list[DetectionData]:
     detections = []
     for image in images:
-        detections.extend(detect_image(image))
+        detections.extend(detect_image(image, config))
 
     return detections

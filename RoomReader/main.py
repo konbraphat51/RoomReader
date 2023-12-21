@@ -6,6 +6,6 @@ config = Config()
 config.data_directory = config.sampledata_directory
 
 images = import_pictures(config)
-detection_data = detect_images(images)
+detection_data = detect_images(images, config)
 
 print(detection_data)
