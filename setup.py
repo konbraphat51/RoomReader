@@ -1,8 +1,10 @@
 from setuptools import find_packages, setup
 
+
 def requirements():
     with open("requirements.txt") as f:
         return f.read().splitlines()
+
 
 setup(
     name="RoomReader",
@@ -16,6 +18,6 @@ setup(
     packages=find_packages(),
     install_requires=[],
     entry_points={
-#        "console_scripts": ["project_name = project_name.__main__:main"]
+        #        "console_scripts": ["project_name = project_name.__main__:main"]
     },
 )
