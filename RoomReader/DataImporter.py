@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import json
 from PIL import Image
 from PIL.ExifTags import TAGS
 from UnityQuaternion import Quaternion
@@ -18,16 +19,17 @@ def import_picture(path: Path, config: Config) -> ImageData:
     image = Image.open(path.resolve())
     
     # Get the exif data
-    exif_data = image.getexif()
+    exif_data = image._getexif()
+    maker_note = exif_data[MAKER_NOTE_ID].decode("utf-8")    
+    maker_note_json = json.loads(maker_note)
     
-    for k, v in exif_data.items():
-        print(f"{TAGS.get(k)}: {v}")
+    # get position
+    position = Vector(maker_note_json["position_x"], maker_note_json["position_y"], maker_note_json["position_z"])
     
-    maker_note = exif_data[MAKER_NOTE_ID]
-    print(maker_note)
+    # get direction
+    direction = Quaternion(maker_note_json["direction_x"], maker_note_json["direction_y"], maker_note_json["direction_z"], maker_note_json["direction_w"])
     
-    image_data = ImageData(image)
+    image_data = ImageData(image, direction, position)
     
+    return image_data
     
-if __name__ == "__main__":
-    import_picture(Path("Data/image_2023-12-19T09-25-18.962Z.jpg"), Config())
