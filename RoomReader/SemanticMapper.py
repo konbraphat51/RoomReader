@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import Iterable
+from UnityQuaternion import Quaternion
 from RoomReader.DetectionData import DetectionData
 from RoomReader.ImageData import ImageData
 from RoomReader.Config import Config
 from RoomReader.Vector import Vector
-from UnityQuaternion import Quaternion
+from RoomReader.GeometryHelper import get_index
 
 def map_semantic(detection_data: Iterable[DetectionData], config: Config):
     scaler_fields = create_semantic_fields(detection_data, config)
@@ -96,7 +97,7 @@ def _launch_ray(field: list[list[list[float]]], start: Vector, direction: Vector
     ray = start
     
     while (_in_room(ray, config)):
-        field[_get_index("x", ray[0], config)][_get_index("y", ray[1], config)][_get_index("z", ray[2], config)] += 1
+        field[get_index("x", ray[0], config)][get_index("y", ray[1], config)][get_index("z", ray[2], config)] += 1
         ray += direction * 0.3
     
     return
@@ -110,11 +111,3 @@ def _in_room(position: Vector, config: Config) -> bool:
 
 def _filter_by_class(detection_data: Iterable[DetectionData], _class: str) -> Iterable[DetectionData]:
     return [detection for detection in detection_data if detection.name == _class]
-
-def _get_index(axis, position, config):
-    if axis=="x":
-        return int((position - config.room_x_min) / config.interval)
-    elif axis=="y":
-        return int((position - config.room_y_min) / config.interval)
-    else:
-        return int((position - config.room_z_min) / config.interval)
