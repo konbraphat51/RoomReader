@@ -17,4 +17,5 @@ class Config:
         self.interval = 1
         self.semantic_threshold = 2
         self.detection_result_directory = self.library_directory / Path("DetectionResult")
+        self.result_directory = self.library_directory / Path("Result")
         self.camera_vector = Vector(0, 0, -1)
