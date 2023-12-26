@@ -6,6 +6,17 @@ from RoomReader.ImageData import ImageData
 
 def detect_image(image: ImageData, config: Config) -> list[DetectionData]:
     results = config.yolo_model(image.path.resolve())
+    
+    return _to_class_data(results)
+
+def detect_images(images: list[ImageData], config: Config) -> list[DetectionData]:
+    detections = []
+    for image in images:
+        detections.extend(detect_image(image, config))
+
+    return detections
+
+def _to_class_data(results):
     df_objects = results.pandas().xyxy[0]
 
     detections = []
@@ -17,12 +28,5 @@ def detect_image(image: ImageData, config: Config) -> list[DetectionData]:
         name = row["name"]
 
         detections.append(DetectionData(image, xmin, ymin, xmax, ymax, name))
-
-    return detections
-
-def detect_images(images: list[ImageData], config: Config) -> list[DetectionData]:
-    detections = []
-    for image in images:
-        detections.extend(detect_image(image, config))
 
     return detections
