@@ -15,3 +15,4 @@ class Config:
         self.room_z_max = 20
         self.interval = 1
         self.semantic_threshold = 2
+        self.detection_result_directory = self.library_directory / Path("DetectionResult")
