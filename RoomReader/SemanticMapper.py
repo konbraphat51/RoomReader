@@ -88,8 +88,7 @@ def _weighten_field(detection_data: Iterable[DetectionData], config:Config) -> l
 
 def _process_a_detection(field: list[list[list[float]]], detection: DetectionData, config: Config):
     device2room = Quaternion.Inverse(detection.image.quaternion)
-    camera_direction_in_device = Vector(0, 0, -1)
-    direction = device2room * camera_direction_in_device
+    direction = device2room * config.camera_vector
     direction = Vector(direction[0], direction[1], direction[2])
     _launch_ray(field, detection.image.position, direction, config)
     
