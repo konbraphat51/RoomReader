@@ -54,11 +54,3 @@ def import_pictures(config: Config) -> list[ImageData]:
         image_data_list.append(import_picture(path, config))
 
     return image_data_list
-
-if __name__ == "__main__":
-    config = Config()
-    image_data = import_picture(Path("RoomReader/SampleData/image_2023-12-26T03-00-47.999Z.jpg"), config)
-    
-    print(image_data.position)
-    print(image_data.quaternion.ToString())
-    print(image_data.quaternion * config.camera_vector)
