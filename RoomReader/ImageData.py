@@ -11,3 +11,4 @@ class ImageData:
         self.quaternion = quaternion
         self.position = position
         self.path = path
+        self.height, self.width = image.size
