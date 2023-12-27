@@ -8,6 +8,7 @@ from UnityQuaternion import Quaternion
 from RoomReader.ImageData import ImageData
 from RoomReader.Config import Config
 from RoomReader.GeometryHelper import get_index
+from RoomReader.Vector import Vector
 
 def visualize_sampling(images: list[ImageData], config: Config):
     vectors = _convert_to_vectors(images, config)
@@ -22,7 +23,7 @@ def visualize_sampling(images: list[ImageData], config: Config):
         [location[1] for location in locations],
         [vector[0] for vector in vectors],
         [vector[1] for vector in vectors],
-        scale=1,
+        scale=10,
     )
     
     print([(vector[0], vector[1]) for vector in vectors])
@@ -42,4 +43,5 @@ def _convert_to_vectors(images: list[ImageData], config):
     return vectors
 
 def _convert_to_vector(image: ImageData, config):
-    return Quaternion.Inverse(image.quaternion) * config.camera_vector
+    vec = Quaternion.Inverse(image.quaternion) * config.camera_vector
+    return Vector(vec[0], vec[1], vec[2]).normalized() * 1
