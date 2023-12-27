@@ -42,4 +42,5 @@ def _save_detection_image(results, config: Config):
     
     img = Image.fromarray(img_array)
     
-    img.save(config.detection_result_directory / Path(str(int(random()*1000))+".png"))
+    if config.save_detection_images:
+        img.save(config.detection_result_directory / Path(str(int(random()*1000))+".png"))
