@@ -5,7 +5,7 @@ from RoomReader.DetectionData import DetectionData
 from RoomReader.ImageData import ImageData
 from RoomReader.Config import Config
 from RoomReader.Vector import Vector
-from RoomReader.GeometryHelper import get_index
+from RoomReader.GeometryHelper import get_index, in_room
 
 def map_semantic(detection_data: Iterable[DetectionData], config: Config):
     scaler_fields = create_semantic_fields(detection_data, config)
@@ -95,18 +95,11 @@ def _process_a_detection(field: list[list[list[float]]], detection: DetectionDat
 def _launch_ray(field: list[list[list[float]]], start: Vector, direction: Vector, config: Config):
     ray = start
     
-    while (_in_room(ray, config)):
+    while (in_room(ray, config)):
         field[get_index("x", ray[0], config)][get_index("y", ray[1], config)][get_index("z", ray[2], config)] += 1
         ray += direction * 0.3
     
     return
-    
-def _in_room(position: Vector, config: Config) -> bool:
-    if config.room_x_min <= position[0] <= config.room_x_max:
-        if config.room_y_min <= position[1] <= config.room_y_max:
-            if config.room_z_min <= position[2] <= config.room_z_max:
-                return True
-    return False
 
 def _filter_by_class(detection_data: Iterable[DetectionData], _class: str) -> Iterable[DetectionData]:
     return [detection for detection in detection_data if detection.name == _class]
