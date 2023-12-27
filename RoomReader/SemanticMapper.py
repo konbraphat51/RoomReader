@@ -31,6 +31,7 @@ def map_semantic_2d(detection_data: Iterable[DetectionData], config: Config):
     vector_field = _make_scaler_field(config, "")
     for x in range(len(vector_field)):
         for y in range(len(vector_field[x])):
+            #squeeze z axis
             vector_field[x][y] = ""
             
             _class_num = {}
