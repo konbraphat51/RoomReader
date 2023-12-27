@@ -20,3 +20,6 @@ class Config:
         self.result_directory = self.library_directory / Path("Result")
         self.camera_vector = Vector(0, 0, -1)
         self.save_detection_images = True
+        self.angle_of_view_x = 60 #degree
+        self.angle_of_view_y = 75 #degree
+        
