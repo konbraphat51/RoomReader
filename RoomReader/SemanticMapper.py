@@ -58,6 +58,7 @@ def create_semantic_fields(detection_data: Iterable[DetectionData], config: Conf
     for _class in classes_unique:
         scaler_fields[_class] = _make_scaler_field(config)
         
+    # make scaler field seperated by detected classes
     for _class in classes_unique:
         filtered_data = _filter_by_class(detection_data, _class)
         scaler_fields[_class] = _weighten_field(filtered_data, config)
