@@ -23,3 +23,13 @@ class Vector(tuple):
     
     def magnitude(self) -> float:
         return (self[0] ** 2 + self[1] ** 2 + self[2] ** 2) ** 0.5
+
+    def Cross(vec0, vec1) -> Vector:
+        """
+        Static
+        """
+        return Vector(
+            vec0[1] * vec1[2] - vec0[2] * vec1[1],
+            vec0[2] * vec1[0] - vec0[0] * vec1[2],
+            vec0[0] * vec1[1] - vec0[1] * vec1[0],
+        )
