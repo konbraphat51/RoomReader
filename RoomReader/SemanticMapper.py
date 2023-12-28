@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Iterable
+import math
 from UnityQuaternion import Quaternion
 from RoomReader.DetectionData import DetectionData
 from RoomReader.ImageData import ImageData
@@ -89,19 +90,63 @@ def _weighten_field(detection_data: Iterable[DetectionData], config:Config) -> l
     return output
 
 def _process_a_detection(field: list[list[list[float]]], detection: DetectionData, config: Config):
+    #get image direction
     device2room = Quaternion.Inverse(detection.image.quaternion)
     direction = device2room * config.camera_vector
     direction = Vector(direction[0], direction[1], direction[2])
-    _launch_ray(field, detection.image.position, direction, config)
     
-def _launch_ray(field: list[list[list[float]]], start: Vector, direction: Vector, config: Config):
-    ray = start
+    vectors_launching = []
     
-    while (in_room(ray, config)):
-        field[get_index("x", ray[0], config)][get_index("y", ray[1], config)][get_index("z", ray[2], config)] += 1
-        ray += direction * 0.3
+    # center of detection
+    center_in_image = (Vector(detection.xmin, detection.ymin, 0) + Vector(detection.xmax, detection.ymax, 0)) * 0.5    
+    center_angle_x, center_angle_y = _get_angle_in_camera(center_in_image, detection, config)    
+    center_vector = _vector_rotate_vector_by_incamera_angle(direction, center_angle_x, center_angle_y)
+    vectors_launching.append(center_vector)
     
-    return
+    for vector in vectors_launching:
+        _launch_ray(field, detection, vector, config)
+    
+def _launch_ray(field: list[list[list[float]]], detection: DetectionData, direction: Vector, config: Config):
+
+def _get_angle_in_camera(point: Vector, detection: DetectionData, config: Config) -> Vector:
+    # x in camera
+    center_x = point[0]
+    if center_x > detection.image.width * 0.5:
+        # center is in right side of image
+        ratio = (center_x - detection.image.width * 0.5) / (detection.image.width * 0.5)
+        angle_x = _get_angle_from_ratio(ratio, config.angle_of_view_x)
+    else:
+        # center is in left side of image
+        ratio = (detection.image.width * 0.5 - center_x) / (detection.image.width * 0.5)
+        angle_x = -_get_angle_from_ratio(ratio, config.angle_of_view_x)
+        
+    # y in camera
+    center_y = point[1]
+    if center_y > detection.image.height * 0.5:
+        # center is in bottom side of image
+        ratio = (center_y - detection.image.height * 0.5) / (detection.image.height * 0.5)
+        angle_y = _get_angle_from_ratio(ratio, config.angle_of_view_y)
+    else:
+        # center is in top side of image
+        ratio = (detection.image.height * 0.5 - center_y) / (detection.image.height * 0.5)
+        angle_y = -_get_angle_from_ratio(ratio, config.angle_of_view_y)
+
+    return Vector(angle_x, angle_y, 0)
+
+def _get_angle_from_ratio(ratio: float, camera_angle_of_view: float):
+    # https://github.com/konbraphat51/ReckonerCamera/issues/1#issuecomment-1869883039
+    return math.acos(ratio * math.cos(math.radians(camera_angle_of_view * 0.5)))
+
+def _vector_rotate_vector_by_incamera_angle(vector: Vector, camera_angle_x: float, camera_angle_y: float) -> Vector:
+    #rotate by x angle
+    vector = Quaternion.Euler(0,0,-camera_angle_x) * vector #negating for left-threated coordinate system
+    vector = Vector(vector[0], vector[1], vector[2])
+    
+    #rotate by y angle
+    rotate_axis = Vector.Cross(vector, Vector(0,0,1))
+    vector = Quaternion.AngleAxis(camera_angle_y, rotate_axis) * vector
+    
+    return vector
 
 def _filter_by_class(detection_data: Iterable[DetectionData], _class: str) -> Iterable[DetectionData]:
     return [detection for detection in detection_data if detection.name == _class]
