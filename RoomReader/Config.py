@@ -8,7 +8,7 @@ class Config:
         self.library_directory = Path(__file__).parent
         self.data_directory = self.library_directory / Path("Data")
         self.sampledata_directory = self.library_directory / Path("SampleData")
-        self.yolo_model = model = torch.hub.load(
+        self.yolo_model = torch.hub.load(
             "ultralytics/yolov5", "yolov5s", pretrained=True
         )
         self.room_x_min = -20
