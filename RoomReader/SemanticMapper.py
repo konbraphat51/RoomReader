@@ -239,6 +239,7 @@ def _vector_rotate_vector_by_incamera_angle(
     # rotate by y angle
     rotate_axis = Vector.cross(vector, Vector(0, 0, 1))
     vector = Quaternion.AngleAxis(camera_angle_y, rotate_axis) * vector
+    vector = Vector(vector[0], vector[1], vector[2])
 
     return vector
 
