@@ -8,19 +8,24 @@ from RoomReader.Config import Config
 from RoomReader.DetectionData import DetectionData
 from RoomReader.ImageData import ImageData
 
+
 def detect_image(image: ImageData, config: Config) -> list[DetectionData]:
     results = config.yolo_model(image.path.resolve())
-    
+
     _save_detection_image(results, config)
-    
+
     return _to_class_data(results, image)
 
-def detect_images(images: list[ImageData], config: Config) -> list[DetectionData]:
+
+def detect_images(
+    images: list[ImageData], config: Config
+) -> list[DetectionData]:
     detections = []
     for image in images:
         detections.extend(detect_image(image, config))
 
     return detections
+
 
 def _to_class_data(results, image: ImageData):
     df_objects = results.pandas().xyxy[0]
@@ -37,10 +42,14 @@ def _to_class_data(results, image: ImageData):
 
     return detections
 
+
 def _save_detection_image(results, config: Config):
     img_array = results.render()[0]
-    
+
     img = Image.fromarray(img_array)
-    
+
     if config.save_detection_images:
-        img.save(config.detection_result_directory / Path(str(int(random()*1000))+".png"))
+        img.save(
+            config.detection_result_directory
+            / Path(str(int(random() * 1000)) + ".png")
+        )
