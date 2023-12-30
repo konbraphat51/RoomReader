@@ -27,8 +27,6 @@ def visualize_sampling(images: list[ImageData], config: Config):
         scale=10,
     )
 
-    print([(vector[0], vector[1]) for vector in vectors])
-
     # axis label
     ax.set_xlabel("x")
     ax.set_ylabel("y")
