@@ -74,7 +74,7 @@ class SemanticMapper:
 
         # sort by position
         sorted_detection_data = sorted(
-            detection_data, key=lambda detection: detection.position
+            detection_data, key=lambda detection: detection.image.position
         )
 
         # position -> list[DetectionData]
