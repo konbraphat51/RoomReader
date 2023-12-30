@@ -12,7 +12,7 @@ from RoomReader.ImageData import ImageData
 def detect_image(image: ImageData, config: Config) -> list[DetectionData]:
     results = config.yolo_model(image.path.resolve())
 
-    _save_detection_image(results, config)
+    _save_detection_image(results, image, config)
 
     return _to_class_data(results, image)
 
@@ -43,13 +43,16 @@ def _to_class_data(results, image: ImageData):
     return detections
 
 
-def _save_detection_image(results, config: Config):
+def _save_detection_image(results, image: ImageData, config: Config):
     img_array = results.render()[0]
 
     img = Image.fromarray(img_array)
 
     if config.save_detection_images:
+        # image filename
+        filename = image.path.name
+        
         img.save(
             config.detection_result_directory
-            / Path(str(int(random() * 1000)) + ".png")
+            / filename
         )
