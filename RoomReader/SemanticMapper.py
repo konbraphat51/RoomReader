@@ -83,7 +83,7 @@ class SemanticMapper:
         # classify by position
         for detection in detection_data:
             # if position is same as last one...
-            if detection.position == detections_for_position[-1][0].position:
+            if detection.image.position == detections_for_position[-1][0].image.position:
                 # ...add to last (same position) list
                 detections_for_position[-1].append(detection)
             # if not...
