@@ -15,4 +15,4 @@ visualize_sampling(images, config)
 
 semantic_fields = map_semantic_2d(detection_data, config)
 
-visualize_semantic2D(semantic_fields, config)
+visualize_semantic2D(semantic_fields, detection_data, config)

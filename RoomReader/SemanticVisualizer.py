@@ -1,22 +1,34 @@
+from typing import Iterable
+from copy import deepcopy
 import pandas as pd
 import altair as alt
 from RoomReader.Config import Config
-from RoomReader.GeometryHelper import from_index
+from RoomReader.DetectionData import DetectionData
+from RoomReader.GeometryHelper import from_index, get_index, in_room
 
-def visualize_semantic2D(semantic_fields: list[list[str]], config: Config):
+def visualize_semantic2D(semantic_fields: list[list[str]], detections: Iterable[DetectionData], config: Config):
     semantic_visualizer = SemanticVisualizer2D()
-    semantic_visualizer.visualize(semantic_fields, config)
+    semantic_visualizer.visualize(semantic_fields, detections, config)
 
 class SemanticVisualizer:
-    pass
-
-class SemanticVisualizer2D(SemanticVisualizer):
-    def visualize(self, semantic_fields: list[list[str]], config: Config):
-        df = self._convert_to_dataframe(semantic_fields, config)
+    def visualize(self, semantic_fields: list[list[str]], detections: Iterable[DetectionData], config: Config):
+        df = self._convert_to_dataframe(semantic_fields, detections, config)
         
         self._to_scatter(df).save(config.result_directory / "semantic.html")
-    
-    def _convert_to_dataframe(self, semantic_fields: list[list[str]], config: Config):
+
+class SemanticVisualizer2D(SemanticVisualizer):
+    def _convert_to_dataframe(self, semantic_fields: list[list[str]], detections: Iterable[DetectionData], config: Config):
+        semantic_fields = deepcopy(semantic_fields)
+        
+        for detection in detections:
+            if not in_room(detection.image.position, config):
+                continue
+            
+            x = get_index("x", detection.image.position[0], config)
+            y = get_index("y", detection.image.position[1], config)
+            
+            semantic_fields[x][y] = "Observe Point"
+        
         data = []
         for x in range(len(semantic_fields)):
             for y in range(len(semantic_fields[x])):
