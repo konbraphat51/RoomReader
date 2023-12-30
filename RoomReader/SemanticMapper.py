@@ -186,7 +186,7 @@ class SemanticMapper2D(SemanticMapper):
 
 def _get_angle_in_camera(
     point: Vector, detection: DetectionData, config: Config
-) -> Vector:
+) -> tuple[float, float]:
     # x in camera
     center_x = point[0]
     if center_x > detection.image.width * 0.5:
@@ -217,7 +217,7 @@ def _get_angle_in_camera(
         )
         angle_y = -_get_angle_from_ratio(ratio, config.angle_of_view_y)
 
-    return Vector(angle_x, angle_y, 0)
+    return (angle_x, angle_y)
 
 
 def _get_angle_from_ratio(ratio: float, camera_angle_of_view: float):
