@@ -28,3 +28,4 @@ class Config:
         self.save_detection_images = True
         self.angle_of_view_x = 60  # degree
         self.angle_of_view_y = 75  # degree
+        self.flag_observer_range = True

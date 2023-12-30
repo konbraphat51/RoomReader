@@ -14,7 +14,7 @@ class SemanticVisualizer:
     def visualize(self, semantic_fields: list[list[str]], detections: Iterable[DetectionData], config: Config):
         df = self._convert_to_dataframe(semantic_fields, detections, config)
         
-        self._to_scatter(df).save(config.result_directory / "semantic.html")
+        self._to_scatter(df, config).save(config.result_directory / "semantic.html")
 
 class SemanticVisualizer2D(SemanticVisualizer):
     def _convert_to_dataframe(self, semantic_fields: list[list[str]], detections: Iterable[DetectionData], config: Config):
@@ -43,15 +43,29 @@ class SemanticVisualizer2D(SemanticVisualizer):
                 
         return pd.DataFrame(data)
     
-    def _to_scatter(self, df: pd.DataFrame) -> alt.Chart:
+    def _to_scatter(self, df: pd.DataFrame, config: Config) -> alt.Chart:
         selection = alt.selection_multi(fields=['class'], bind='legend')
         color = alt.condition(selection,
                           alt.Color('class:N', title="Class"),
                           alt.value('lightgray'))
         
+        x_range = alt.X('x:Q', title="X")
+        y_range = alt.Y('y:Q', title="Y")
+        
+        if config.flag_observer_range:
+            # get range
+            x_observer_range = [df[df["class"] == "Observe Point"]["x"].min(), df[df["class"] == "Observe Point"]["x"].max()]
+            y_observer_range = [df[df["class"] == "Observe Point"]["y"].min(), df[df["class"] == "Observe Point"]["y"].max()]
+            
+            x_range = alt.X('x:Q', title="X", scale=alt.Scale(domain=x_observer_range))
+            y_range = alt.Y('y:Q', title="Y", scale=alt.Scale(domain=y_observer_range))
+
+            # limit data
+            df = df[(df["x"] >= x_observer_range[0]) & (df["x"] <= x_observer_range[1]) & (df["y"] >= y_observer_range[0]) & (df["y"] <= y_observer_range[1])]
+        
         return alt.Chart(df).mark_circle(size=60).encode(
-            x=alt.X('x:Q', title="X"),
-            y=alt.Y('y:Q', title="Y"),
+            x=x_range,
+            y=y_range,
             color=color,
             tooltip=['class']
         ).add_selection(
