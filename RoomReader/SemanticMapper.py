@@ -152,6 +152,38 @@ class SemanticMapper:
             ray_position += ray_vector
 
 
+class SemanticMapper2D(SemanticMapper):
+    def make_output(
+        self, scaler_fields: dict[str, list[list[list[float]]]], config: Config
+    ):
+        vector_field = super().make_output(scaler_fields, config)
+
+        # to 2D
+        vector_field_2d = []
+        for x in range(len(vector_field)):
+            vector_field_2d.append([])
+            for y in range(len(vector_field[x])):
+                vector_field_2d[x].append(vector_field[x][y][0])
+
+        return vector_field_2d
+
+    def _launch_ray(
+        self,
+        field: list[list[list[bool]]],
+        detection: DetectionData,
+        direction: Vector,
+        config: Config,
+    ):
+        ray_vector = direction * config.ray_interval
+        ray_position = detection.image.position.clone()
+
+        while in_room(ray_position, config):
+            x, y, z = get_index(ray_position, config)
+            field[x][y][0] = True
+
+            ray_position += ray_vector
+
+
 def _get_angle_in_camera(
     point: Vector, detection: DetectionData, config: Config
 ) -> Vector:
@@ -237,35 +269,3 @@ def _make_scaler_field(config: Config, init=0) -> list[list[list[any]]]:
         [[init for _ in range(z_range)] for _ in range(y_range)]
         for _ in range(x_range)
     ]
-
-
-class SemanticMapper2D(SemanticMapper):
-    def make_output(
-        self, scaler_fields: dict[str, list[list[list[float]]]], config: Config
-    ):
-        vector_field = super().make_output(scaler_fields, config)
-
-        # to 2D
-        vector_field_2d = []
-        for x in range(len(vector_field)):
-            vector_field_2d.append([])
-            for y in range(len(vector_field[x])):
-                vector_field_2d[x].append(vector_field[x][y][0])
-
-        return vector_field_2d
-
-    def _launch_ray(
-        self,
-        field: list[list[list[bool]]],
-        detection: DetectionData,
-        direction: Vector,
-        config: Config,
-    ):
-        ray_vector = direction * config.ray_interval
-        ray_position = detection.image.position.clone()
-
-        while in_room(ray_position, config):
-            x, y, z = get_index(ray_position, config)
-            field[x][y][0] = True
-
-            ray_position += ray_vector
