@@ -8,149 +8,107 @@ from RoomReader.Config import Config
 from RoomReader.Vector import Vector
 from RoomReader.GeometryHelper import get_index, in_room
 
-def map_semantic(detection_data: Iterable[DetectionData], config: Config):
-    scaler_fields = create_semantic_fields(detection_data, config)
+#abstract
+class SemanticMapper:
+    def map_semantic(self, detection_data: Iterable[DetectionData], config: Config):
+        scaler_fields = self.create_semantic_fields(detection_data, config)
+        
+        return self.make_output(scaler_fields, config)
     
-    vector_field = _make_scaler_field(config, "")
-    for x in range(len(vector_field)):
-        for y in range(len(vector_field[x])):
-            for z in range(len(vector_field[x][y])):
-                _class_num = {}
-                for _class in scaler_fields.keys():
-                    _class_num[_class] = scaler_fields[_class][x][y][z]
+    def make_output(self, scaler_fields: dict[str, list[list[list[float]]]], config: Config):
+        vector_field = _make_scaler_field(config, "")
+        for x in range(len(vector_field)):
+            for y in range(len(vector_field[x])):
+                for z in range(len(vector_field[x][y])):
+                    _class_num = {}
+                    for _class in scaler_fields.keys():
+                        _class_num[_class] = scaler_fields[_class][x][y][z]
+                        
+                    max_class = max(_class_num, key=_class_num.get)
                     
-                max_class = max(_class_num, key=_class_num.get)
+                    if _class_num[max_class] >= config.semantic_threshold:
+                        vector_field[x][y][z] = max_class
+                        
+        return vector_field
+        
+    def create_semantic_fields(self, detection_data: Iterable[DetectionData], config: Config) -> dict[str, list[list[list[float]]]]:
+        #make unique classes list
+        classes_unique = _make_unique_classes(detection_data)
+        
+        scaler_fields = {}
+        for _class in classes_unique:
+            scaler_fields[_class] = _make_scaler_field(config)
+            
+        # make scaler field seperated by detected classes
+        for _class in classes_unique:
+            # detection data of only this class
+            filtered_detection = _filter_by_class(detection_data, _class)
+                    
+            scaler_fields[_class] = self._weighten_field(filtered_detection, config)
+            
+        return scaler_fields
+
+    def _weighten_field(self, detection_data: Iterable[DetectionData], config:Config) -> list[list[list[float]]]:
+        output = _make_scaler_field(config)
+        
+        # sort by position
+        sorted_detection_data = sorted(detection_data, key=lambda detection: detection.position)
+        
+        # position -> list[DetectionData]
+        detections_for_position = [[sorted_detection_data[-1]]]
+        
+        # classify by position
+        for detection in detection_data:
+            # if position is same as last one...
+            if detection.position == detections_for_position[-1][0].position:
+                # ...add to last (same position) list
+                detections_for_position[-1].append(detection)
+            # if not...
+            else:
+                # ...make new list for new position
+                detections_for_position.append([detection])
+            
+        # get marked boolean field
+        for detections in detections_for_position:
+            field = _make_scaler_field(config, False)
+            for detection in detections:
+                self._process_a_detection(field, detection, config)
                 
-                if _class_num[max_class] >= config.semantic_threshold:
-                    vector_field[x][y][z] = max_class
-                    
-    return vector_field
-
-def map_semantic_2d(detection_data: Iterable[DetectionData], config: Config):
-    scaler_fields = create_semantic_fields(detection_data, config)
-    
-    vector_field = _make_scaler_field(config, "")
-    for x in range(len(vector_field)):
-        for y in range(len(vector_field[x])):
-            #squeeze z axis
-            vector_field[x][y] = ""
+            # add to output
+            for x in range(len(output)):
+                for y in range(len(output[x])):
+                    for z in range(len(output[x][y])):
+                        if field[x][y][z]:
+                            output[x][y][z] += 1
             
-            _class_num = {}
-            for _class in scaler_fields.keys():
-                for z in range(len(scaler_fields[_class][x][y])):
-                    _class_num[_class] = _class_num.get(_class, 0) + scaler_fields[_class][x][y][z]
-                    
-            if len(_class_num) == 0:
-                continue
+        return output
+
+    def _process_a_detection(self, field: list[list[list[bool]]], detection: DetectionData, config: Config):
+        #get image direction
+        device2room = Quaternion.Inverse(detection.image.quaternion)
+        direction = device2room * config.camera_vector
+        direction = Vector(direction[0], direction[1], direction[2])
+        
+        vectors_launching = []
+        
+        # center of detection
+        center_in_image = (Vector(detection.xmin, detection.ymin, 0) + Vector(detection.xmax, detection.ymax, 0)) * 0.5    
+        center_angle_x, center_angle_y = _get_angle_in_camera(center_in_image, detection, config)    
+        center_vector = _vector_rotate_vector_by_incamera_angle(direction, center_angle_x, center_angle_y)
+        vectors_launching.append(center_vector)
+        
+        for vector in vectors_launching:
+            self._launch_ray(field, detection, vector, config)
+        
+    def _launch_ray(self, field: list[list[list[bool]]], detection: DetectionData, direction: Vector, config: Config):
+        ray_vector = direction * config.ray_interval
+        ray_position = detection.image.position.clone()
+        
+        while (in_room(ray_position, config)):
+            x, y, z = get_index(ray_position, config)
+            field[x][y][z] = True
             
-            max_class = max(_class_num, key=_class_num.get)
-                
-            if _class_num[max_class] >= config.semantic_threshold:
-                vector_field[x][y] = max_class
-                    
-    return vector_field
-        
-    
-def create_semantic_fields(detection_data: Iterable[DetectionData], config: Config) -> dict[str, list[list[list[float]]]]:
-    #make unique classes list
-    classes_unique = _make_unique_classes(detection_data)
-    
-    scaler_fields = {}
-    for _class in classes_unique:
-        scaler_fields[_class] = _make_scaler_field(config)
-        
-    # make scaler field seperated by detected classes
-    for _class in classes_unique:
-        # detection data of only this class
-        filtered_detection = _filter_by_class(detection_data, _class)
-                
-        scaler_fields[_class] = _weighten_field(filtered_detection, config)
-        
-    return scaler_fields
-            
-def _make_unique_classes(detection_data: Iterable[DetectionData]):
-    class_exists = []
-    for detection in detection_data:
-        if detection.name not in class_exists:
-            class_exists.append(detection.name)
-                    
-    return class_exists
-
-def _make_scaler_field(config: Config, init=0) -> list[list[list[float]]]:
-    x_range = int((config.room_x_max - config.room_x_min) / config.interval)
-    y_range = int((config.room_y_max - config.room_y_min) / config.interval)
-    z_range = int((config.room_z_max - config.room_z_min) / config.interval)
-    
-    return [[[init for _ in range(z_range)] for _ in range(y_range)] for _ in range(x_range)]
-
-def _make_boolean_field(config: Config) -> list[list[list[bool]]]:
-    x_range = int((config.room_x_max - config.room_x_min) / config.interval)
-    y_range = int((config.room_y_max - config.room_y_min) / config.interval)
-    z_range = int((config.room_z_max - config.room_z_min) / config.interval)
-    
-    return [[[False for _ in range(z_range)] for _ in range(y_range)] for _ in range(x_range)]
-
-def _weighten_field(detection_data: Iterable[DetectionData], config:Config) -> list[list[list[float]]]:
-    output = _make_scaler_field(config)
-    
-    # sort by position
-    sorted_detection_data = sorted(detection_data, key=lambda detection: detection.position)
-    
-    # position -> list[DetectionData]
-    detections_for_position = [[sorted_detection_data[-1]]]
-    
-    # classify by position
-    for detection in detection_data:
-        # if position is same as last one...
-        if detection.position == detections_for_position[-1][0].position:
-            # ...add to last (same position) list
-            detections_for_position[-1].append(detection)
-        # if not...
-        else:
-            # ...make new list for new position
-            detections_for_position.append([detection])
-        
-    # get marked boolean field
-    for detections in detections_for_position:
-        field = _make_boolean_field(config)
-        for detection in detections:
-            _process_a_detection(field, detection, config)
-            
-        # add to output
-        for x in range(len(output)):
-            for y in range(len(output[x])):
-                for z in range(len(output[x][y])):
-                    if field[x][y][z]:
-                        output[x][y][z] += 1
-        
-    return output
-
-def _process_a_detection(field: list[list[list[bool]]], detection: DetectionData, config: Config):
-    #get image direction
-    device2room = Quaternion.Inverse(detection.image.quaternion)
-    direction = device2room * config.camera_vector
-    direction = Vector(direction[0], direction[1], direction[2])
-    
-    vectors_launching = []
-    
-    # center of detection
-    center_in_image = (Vector(detection.xmin, detection.ymin, 0) + Vector(detection.xmax, detection.ymax, 0)) * 0.5    
-    center_angle_x, center_angle_y = _get_angle_in_camera(center_in_image, detection, config)    
-    center_vector = _vector_rotate_vector_by_incamera_angle(direction, center_angle_x, center_angle_y)
-    vectors_launching.append(center_vector)
-    
-    for vector in vectors_launching:
-        _launch_ray(field, detection, vector, config)
-    
-def _launch_ray(field: list[list[list[bool]]], detection: DetectionData, direction: Vector, config: Config):
-    ray_vector = direction * config.ray_interval
-    ray_position = detection.image.position.clone()
-    
-    while (in_room(ray_position, config)):
-        x, y, z = get_index(ray_position, config)
-        field[x][y][z] = True
-        
-        ray_position += ray_vector
+            ray_position += ray_vector
 
 def _get_angle_in_camera(point: Vector, detection: DetectionData, config: Config) -> Vector:
     # x in camera
@@ -194,3 +152,22 @@ def _vector_rotate_vector_by_incamera_angle(vector: Vector, camera_angle_x: floa
 
 def _filter_by_class(detection_data: Iterable[DetectionData], _class: str) -> Iterable[DetectionData]:
     return [detection for detection in detection_data if detection.name == _class]
+
+def _make_unique_classes(detection_data: Iterable[DetectionData]):
+    class_exists = []
+    for detection in detection_data:
+        if detection.name not in class_exists:
+            class_exists.append(detection.name)
+                    
+    return class_exists
+
+def _make_scaler_field(config: Config, init=0) -> list[list[list[any]]]:
+    x_range = int((config.room_x_max - config.room_x_min) / config.interval)
+    y_range = int((config.room_y_max - config.room_y_min) / config.interval)
+    z_range = int((config.room_z_max - config.room_z_min) / config.interval)
+    
+    return [[[init for _ in range(z_range)] for _ in range(y_range)] for _ in range(x_range)]
+
+class SemanticMapper2D(SemanticMapper):
+    def make_output(self, scaler_fields: dict[str, list[list[list[float]]]], config: Config):
+        pass
