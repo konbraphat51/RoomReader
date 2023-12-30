@@ -146,9 +146,9 @@ class SemanticMapper:
         ray_position = detection.image.position.clone()
 
         while in_room(ray_position, config):
-            x = get_index("x", ray_position, config)
-            y = get_index("y", ray_position, config)
-            z = get_index("z", ray_position, config)
+            x = get_index("x", ray_position[0], config)
+            y = get_index("y", ray_position[1], config)
+            z = get_index("z", ray_position[2], config)
             field[x][y][z] = True
 
             ray_position += ray_vector
@@ -180,8 +180,8 @@ class SemanticMapper2D(SemanticMapper):
         ray_position = detection.image.position.clone()
 
         while in_room(ray_position, config):
-            x = get_index("x", ray_position, config)
-            y = get_index("y", ray_position, config)
+            x = get_index("x", ray_position[0], config)
+            y = get_index("y", ray_position[1], config)
             field[x][y][0] = True
 
             ray_position += ray_vector
