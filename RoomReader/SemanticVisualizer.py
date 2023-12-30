@@ -54,8 +54,8 @@ class SemanticVisualizer2D(SemanticVisualizer):
         
         if config.flag_observer_range:
             # get range
-            x_observer_range = [df[df["class"] == "Observe Point"]["x"].min(), df[df["class"] == "Observe Point"]["x"].max()]
-            y_observer_range = [df[df["class"] == "Observe Point"]["y"].min(), df[df["class"] == "Observe Point"]["y"].max()]
+            x_observer_range = [df[df["class"] == "Observe Point"]["x"].min() - config.observer_range_offset, df[df["class"] == "Observe Point"]["x"].max() + config.observer_range_offset]
+            y_observer_range = [df[df["class"] == "Observe Point"]["y"].min() - config.observer_range_offset, df[df["class"] == "Observe Point"]["y"].max() + config.observer_range_offset]
             
             x_range = alt.X('x:Q', title="X", scale=alt.Scale(domain=x_observer_range))
             y_range = alt.Y('y:Q', title="Y", scale=alt.Scale(domain=y_observer_range))

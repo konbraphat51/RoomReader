@@ -11,13 +11,13 @@ class Config:
         self.yolo_model = torch.hub.load(
             "ultralytics/yolov5", "yolov5s", pretrained=True
         )
-        self.room_x_min = -20
+        self.room_x_min = -5
         self.room_x_max = 20
-        self.room_y_min = -20
+        self.room_y_min = -5
         self.room_y_max = 20
         self.room_z_min = -20
         self.room_z_max = 20
-        self.interval = 1
+        self.interval = 0.5
         self.ray_interval = 0.5
         self.semantic_threshold = 2
         self.detection_result_directory = self.library_directory / Path(
@@ -29,3 +29,4 @@ class Config:
         self.angle_of_view_x = 60  # degree
         self.angle_of_view_y = 75  # degree
         self.flag_observer_range = True
+        self.observer_range_offset = 3.0
