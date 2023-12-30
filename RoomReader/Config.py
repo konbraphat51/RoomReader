@@ -15,6 +15,7 @@ class Config:
         self.room_z_min = -20
         self.room_z_max = 20
         self.interval = 1
+        self.ray_interval = 0.5
         self.semantic_threshold = 2
         self.detection_result_directory = self.library_directory / Path("DetectionResult")
         self.result_directory = self.library_directory / Path("Result")

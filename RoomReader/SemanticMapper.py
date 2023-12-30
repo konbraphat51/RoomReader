@@ -61,8 +61,10 @@ def create_semantic_fields(detection_data: Iterable[DetectionData], config: Conf
         
     # make scaler field seperated by detected classes
     for _class in classes_unique:
-        filtered_data = _filter_by_class(detection_data, _class)
-        scaler_fields[_class] = _weighten_field(filtered_data, config)
+        # detection data of only this class
+        filtered_detection = _filter_by_class(detection_data, _class)
+                
+        scaler_fields[_class] = _weighten_field(filtered_detection, config)
         
     return scaler_fields
             
@@ -74,22 +76,56 @@ def _make_unique_classes(detection_data: Iterable[DetectionData]):
                     
     return class_exists
 
-def _make_scaler_field(config: Config, init=0):
+def _make_scaler_field(config: Config, init=0) -> list[list[list[float]]]:
     x_range = int((config.room_x_max - config.room_x_min) / config.interval)
     y_range = int((config.room_y_max - config.room_y_min) / config.interval)
     z_range = int((config.room_z_max - config.room_z_min) / config.interval)
     
     return [[[init for _ in range(z_range)] for _ in range(y_range)] for _ in range(x_range)]
 
+def _make_boolean_field(config: Config) -> list[list[list[bool]]]:
+    x_range = int((config.room_x_max - config.room_x_min) / config.interval)
+    y_range = int((config.room_y_max - config.room_y_min) / config.interval)
+    z_range = int((config.room_z_max - config.room_z_min) / config.interval)
+    
+    return [[[False for _ in range(z_range)] for _ in range(y_range)] for _ in range(x_range)]
+
 def _weighten_field(detection_data: Iterable[DetectionData], config:Config) -> list[list[list[float]]]:
     output = _make_scaler_field(config)
     
+    # sort by position
+    sorted_detection_data = sorted(detection_data, key=lambda detection: detection.position)
+    
+    # position -> list[DetectionData]
+    detections_for_position = [[sorted_detection_data[-1]]]
+    
+    # classify by position
     for detection in detection_data:
-        _process_a_detection(output, detection, config)
+        # if position is same as last one...
+        if detection.position == detections_for_position[-1][0].position:
+            # ...add to last (same position) list
+            detections_for_position[-1].append(detection)
+        # if not...
+        else:
+            # ...make new list for new position
+            detections_for_position.append([detection])
+        
+    # get marked boolean field
+    for detections in detections_for_position:
+        field = _make_boolean_field(config)
+        for detection in detections:
+            _process_a_detection(field, detection, config)
+            
+        # add to output
+        for x in range(len(output)):
+            for y in range(len(output[x])):
+                for z in range(len(output[x][y])):
+                    if field[x][y][z]:
+                        output[x][y][z] += 1
         
     return output
 
-def _process_a_detection(field: list[list[list[float]]], detection: DetectionData, config: Config):
+def _process_a_detection(field: list[list[list[bool]]], detection: DetectionData, config: Config):
     #get image direction
     device2room = Quaternion.Inverse(detection.image.quaternion)
     direction = device2room * config.camera_vector
@@ -106,7 +142,15 @@ def _process_a_detection(field: list[list[list[float]]], detection: DetectionDat
     for vector in vectors_launching:
         _launch_ray(field, detection, vector, config)
     
-def _launch_ray(field: list[list[list[float]]], detection: DetectionData, direction: Vector, config: Config):
+def _launch_ray(field: list[list[list[bool]]], detection: DetectionData, direction: Vector, config: Config):
+    ray_vector = direction * config.ray_interval
+    ray_position = detection.image.position.clone()
+    
+    while (in_room(ray_position, config)):
+        x, y, z = get_index(ray_position, config)
+        field[x][y][z] = True
+        
+        ray_position += ray_vector
 
 def _get_angle_in_camera(point: Vector, detection: DetectionData, config: Config) -> Vector:
     # x in camera
@@ -143,7 +187,7 @@ def _vector_rotate_vector_by_incamera_angle(vector: Vector, camera_angle_x: floa
     vector = Vector(vector[0], vector[1], vector[2])
     
     #rotate by y angle
-    rotate_axis = Vector.Cross(vector, Vector(0,0,1))
+    rotate_axis = Vector.cross(vector, Vector(0,0,1))
     vector = Quaternion.AngleAxis(camera_angle_y, rotate_axis) * vector
     
     return vector
