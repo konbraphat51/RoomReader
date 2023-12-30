@@ -80,16 +80,33 @@ class SemanticMapper:
         # position -> list[DetectionData]
         detections_for_position = [[sorted_detection_data[-1]]]
 
+        position_index = (
+            get_index("x", sorted_detection_data[-1].image.position[0], config),
+            get_index("y", sorted_detection_data[-1].image.position[1], config),
+            get_index("z", sorted_detection_data[-1].image.position[2], config),
+        )
+
         # classify by position
-        for detection in detection_data:
-            # if position is same as last one...
-            if detection.image.position == detections_for_position[-1][0].image.position:
-                # ...add to last (same position) list
-                detections_for_position[-1].append(detection)
-            # if not...
-            else:
-                # ...make new list for new position
-                detections_for_position.append([detection])
+        if len(sorted_detection_data) > 1:
+            for detection in detection_data[1:]:
+                # get index of this detection data
+                this_index = (
+                    get_index("x", detection.image.position[0], config),
+                    get_index("y", detection.image.position[1], config),
+                    get_index("z", detection.image.position[2], config),
+                )
+                
+                # if position is same as last one...
+                if this_index == position_index:
+                    # ...add to last (same position) list
+                    detections_for_position[-1].append(detection)
+                # if not...
+                else:
+                    # ...make new list for new position
+                    detections_for_position.append([detection])
+                    
+                    # update position index
+                    position_index = this_index
 
         # get marked boolean field
         for detections in detections_for_position:
