@@ -8,6 +8,14 @@ from RoomReader.Config import Config
 from RoomReader.Vector import Vector
 from RoomReader.GeometryHelper import get_index, in_room
 
+def map_semantic(detection_data: Iterable[DetectionData], config: Config):
+    semantic_mapper = SemanticMapper()
+    return semantic_mapper.map_semantic(detection_data, config)
+
+def map_semantic_2d(detection_data: Iterable[DetectionData], config: Config):
+    semantic_mapper = SemanticMapper2D()
+    return semantic_mapper.map_semantic(detection_data, config)
+
 #abstract
 class SemanticMapper:
     def map_semantic(self, detection_data: Iterable[DetectionData], config: Config):
@@ -170,4 +178,23 @@ def _make_scaler_field(config: Config, init=0) -> list[list[list[any]]]:
 
 class SemanticMapper2D(SemanticMapper):
     def make_output(self, scaler_fields: dict[str, list[list[list[float]]]], config: Config):
-        pass
+        vector_field = super().make_output(scaler_fields, config)
+        
+        # to 2D
+        vector_field_2d = []
+        for x in range(len(vector_field)):
+            vector_field_2d.append([])
+            for y in range(len(vector_field[x])):
+                vector_field_2d[x].append(vector_field[x][y][0])
+                
+        return vector_field_2d
+    
+    def _launch_ray(self, field: list[list[list[bool]]], detection: DetectionData, direction: Vector, config: Config):
+        ray_vector = direction * config.ray_interval
+        ray_position = detection.image.position.clone()
+        
+        while (in_room(ray_position, config)):
+            x, y, z = get_index(ray_position, config)
+            field[x][y][0] = True
+            
+            ray_position += ray_vector
